@@ -17,7 +17,8 @@ void vec_add(float *A_h, float* B_h, float* C_h, int n) {
   cudaMalloc(&B_d, size);
   cudaMalloc(&C_d, size);
   
-  // Copy A and to device memory
+  // Copy A and B to device memory
+  // (dest, source, size, direction)
   cudaMemcpy(A_d, A_h, size, cudaMemcpyHostToDevice);
   cudaMemcpy(B_d, B_h, size, cudaMemcpyHostToDevice);
   
@@ -25,6 +26,8 @@ void vec_add(float *A_h, float* B_h, float* C_h, int n) {
   // to perform the actual vector addition
 
   // Part 3: Copy C from this device memory
+  cudaMemcpy(C_h, C_d, size, cudaMemcpyDeviceToHost);
+
   // Free device vectors
   cudaFree(A_d);
   cudaFree(B_d);
