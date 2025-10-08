@@ -13,25 +13,25 @@ void vec_add(float *A_h, float* B_h, float* C_h, int n) {
   float *A_d, *B_d, *C_d;
 
   // Part 1: Allocate device memory for A, B and C
-  cudaMalloc(&A_d, size);
-  cudaMalloc(&B_d, size);
-  cudaMalloc(&C_d, size);
+  check_err(cudaMalloc(&A_d, size));
+  check_err(cudaMalloc(&B_d, size));
+  check_err(cudaMalloc(&C_d, size));
   
   // Copy A and B to device memory
   // (dest, source, size, direction)
-  cudaMemcpy(A_d, A_h, size, cudaMemcpyHostToDevice);
-  cudaMemcpy(B_d, B_h, size, cudaMemcpyHostToDevice);
+  check_err(cudaMemcpy(A_d, A_h, size, cudaMemcpyHostToDevice));
+  check_err(cudaMemcpy(B_d, B_h, size, cudaMemcpyHostToDevice));
   
   // Part 2: call kernel - to launch a grid of threads
   // to perform the actual vector addition
 
   // Part 3: Copy C from this device memory
-  cudaMemcpy(C_h, C_d, size, cudaMemcpyDeviceToHost);
+  check_err(cudaMemcpy(C_h, C_d, size, cudaMemcpyDeviceToHost));
 
   // Free device vectors
-  cudaFree(A_d);
-  cudaFree(B_d);
-  cudaFree(C_d);
+  check_err(cudaFree(A_d));
+  check_err(cudaFree(B_d));
+  check_err(cudaFree(C_d));
 }
 
 int main() {
@@ -47,7 +47,7 @@ int main() {
 
   vec_add_cpu(A_h, B_h, C_h, N);
   vec_add(A_h, B_h, C_h, N);
-  
+
   // free allocated memory
   free(A_h);
   free(B_h);
