@@ -3,10 +3,23 @@
 #include <time.h>
 #include "utils.h"
 
-void vec_add(float *A_h, float *B_h, float *C_h, int n) {
-  for (int i = 0; i < n; ++i) {
+void vec_add_cpu(float *A_h, float *B_h, float *C_h, int n) {
+  for (int i = 0; i < n; ++i)
     C_h[i] = A_h[i] + B_h[i];
-  }
+}
+
+void vec_add(float *A, float* B, float* C, int n) {
+  int size = n * sizeof(float);
+  float *d_A, *d_B, *d_C;
+
+  // Part 1: Allocate device memory for A, B and C
+  // Copy A and to device memory
+  
+  // Part 2: call kernel - to launch a grid of threads
+  // to perform the actual vector addition
+
+  // Part 3: Copy C from this device memory
+  // Free device vectors
 }
 
 int main() {
@@ -25,7 +38,7 @@ int main() {
   print_arr(B_h, N);
   print_arr(C_h, N);
 
-  vec_add(A_h, B_h, C_h, N);
+  vec_add_cpu(A_h, B_h, C_h, N);
 
   print_arr(A_h, N);
   print_arr(B_h, N);
