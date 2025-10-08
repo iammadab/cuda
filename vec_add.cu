@@ -20,7 +20,6 @@ void vec_add(float *A_h, float* B_h, float* C_h, int n) {
   // Copy A and to device memory
   cudaMemcpy(A_d, A_h, size, cudaMemcpyHostToDevice);
   cudaMemcpy(B_d, B_h, size, cudaMemcpyHostToDevice);
-  cudaMemcpy(C_d, C_h, size, cudaMemcpyHostToDevice);
   
   // Part 2: call kernel - to launch a grid of threads
   // to perform the actual vector addition
