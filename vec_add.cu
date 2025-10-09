@@ -32,6 +32,7 @@ void vec_add(float *A_h, float* B_h, float* C_h, int n) {
   
   // Part 2: call kernel - to launch a grid of threads
   // to perform the actual vector addition
+  vec_add_kernel<<<ceil(n/256.0), 256>>>(A_d, B_d, C_d, size);
 
   // Part 3: Copy C from this device memory
   check_err(cudaMemcpy(C_h, C_d, size, cudaMemcpyDeviceToHost));
@@ -53,8 +54,11 @@ int main() {
   float *B_h = rand_init(N);
   float *C_h = (float*) malloc(N * sizeof(float));
 
-  vec_add_cpu(A_h, B_h, C_h, N);
   vec_add(A_h, B_h, C_h, N);
+
+  print_arr(A_h, N);
+  print_arr(B_h, N);
+  print_arr(C_h, N);
 
   // free allocated memory
   free(A_h);
