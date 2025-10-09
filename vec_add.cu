@@ -8,6 +8,14 @@ void vec_add_cpu(float *A_h, float *B_h, float *C_h, int n) {
     C_h[i] = A_h[i] + B_h[i];
 }
 
+__global__
+void vec_add_kernel(float *A, float *B, float *C, int n) {
+  int i = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i < n) {
+    C[i] = A[i] + B[i];
+  }
+}
+
 void vec_add(float *A_h, float* B_h, float* C_h, int n) {
   int size = n * sizeof(float);
   float *A_d, *B_d, *C_d;
