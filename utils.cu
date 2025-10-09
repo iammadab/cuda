@@ -14,3 +14,11 @@ float* rand_init(size_t N) {
     Arr[i] = (float) rand() / RAND_MAX;
   return Arr;
 }
+
+// TODO: change this to a macro, so __FILE__ and __LINE__ are useful
+void check_err(cudaError_t resp) {
+  if (resp != cudaSuccess) {
+    printf("%s in %s at line %d\n", cudaGetErrorString(resp), __FILE__, __LINE__);
+    exit(EXIT_FAILURE);
+  }
+}
