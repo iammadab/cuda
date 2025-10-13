@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include "utils.h"
 
-// TODO: check_err
-
 __global__ void rgb_to_grayscale_kernel(unsigned char *in, unsigned char *out, size_t pixels) {
   size_t id = blockIdx.x * blockDim.x + threadIdx.x;
   
