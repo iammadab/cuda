@@ -5,6 +5,7 @@
 #include "stb_image_write.h"
 
 #include <stdio.h>
+#include "utils.h"
 
 // TODO: check_err
 
@@ -36,11 +37,11 @@ int main () {
 
   // allocate GPU memory for input image and grayscale output
   unsigned char *img_d, *grayscale_d;
-  cudaMalloc(&img_d, total_img_bytes * sizeof(unsigned char));
-  cudaMalloc(&grayscale_d, pixels * sizeof(unsigned char));
+  check_err(cudaMalloc(&img_d, total_img_bytes * sizeof(unsigned char)));
+  check_err(cudaMalloc(&grayscale_d, pixels * sizeof(unsigned char)));
 
   // copy image data to the GPU
-  cudaMemcpy(img_d, img_data, total_img_bytes, cudaMemcpyHostToDevice);
+  check_err(cudaMemcpy(img_d, img_data, total_img_bytes, cudaMemcpyHostToDevice));
 
   int block = 256;
   int grid = ceil(pixels / 256.0);
@@ -48,7 +49,7 @@ int main () {
 
   // copy grayscale data from the gpu
   unsigned char *grayscale_h = (unsigned char *) malloc(pixels);
-  cudaMemcpy(grayscale_h, grayscale_d, pixels, cudaMemcpyDeviceToHost);
+  check_err(cudaMemcpy(grayscale_h, grayscale_d, pixels, cudaMemcpyDeviceToHost));
 
   // write grayscale to file
   int stride = width * desired_channels; // tightly packed, no data alignment
@@ -58,6 +59,11 @@ int main () {
       return 1;
   }
 
+  // free memory
   stbi_image_free(img_data);
+  cudaFree(img_d);
+  cudaFree(grayscale_d);
+  free(grayscale_h);
+
   return 0;
 }
