@@ -3,11 +3,6 @@
 #include <time.h>
 #include "utils.h"
 
-void vec_add_cpu(float *A_h, float *B_h, float *C_h, int n) {
-  for (int i = 0; i < n; ++i)
-    C_h[i] = A_h[i] + B_h[i];
-}
-
 __global__
 void vec_add_kernel(float *A, float *B, float *C, int n) {
   int i = threadIdx.x + blockIdx.x * blockDim.x;
