@@ -13,8 +13,6 @@ void check_err(cudaError_t resp);
 
 // Implementations
 #ifdef UTILS_IMPLEMENTATION
-
-#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 
