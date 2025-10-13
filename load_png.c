@@ -6,7 +6,7 @@ int main() {
   int width, height, channels;
 
   // Load the PNG into memory
-  unsigned char *data = stbi_load("input.png", &width, &height, &channels, 3);
+  unsigned char *data = stbi_load("images/sheeps.jpg", &width, &height, &channels, 3);
   if (!data) {
     fprintf(stderr, "Failed to load image: %s\n", stbi_failure_reason());
     return 1;
