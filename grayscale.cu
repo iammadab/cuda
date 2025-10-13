@@ -12,17 +12,11 @@ __global__ void rgb_to_grayscale_kernel(unsigned char *in, unsigned char *out, s
   size_t id = blockIdx.x * blockDim.x + threadIdx.x;
   
   if (id < pixels) {
+    size_t offset = id * 3;
+
     // grayscale computation
     // g = 0.299 * r + 0.587 * g + 0.114 * b;
-    size_t offset = id * 3;
-    
-    float r = (float) in[offset];
-    float g = (float) in[offset + 1];
-    float b = (float) in[offset + 2];
-
-    float y = 0.299f * r + 0.587f * g + 0.114f * b;
-
-    out[id] = (unsigned char) (y + 0.5f);
+    out[id] = 0.299f * in[offset] + 0.587f * in[offset + 1] + 0.114f * in[offset + 2];
   }
 }
 
