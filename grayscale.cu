@@ -4,8 +4,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include <stdio.h>
+#define UTILS_IMPLEMENTATION
 #include "utils.h"
+
+#include <stdio.h>
 
 __global__ void rgb_to_grayscale_kernel(unsigned char *in, unsigned char *out, size_t pixels) {
   size_t id = blockIdx.x * blockDim.x + threadIdx.x;
