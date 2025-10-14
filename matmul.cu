@@ -114,11 +114,17 @@ int main() {
   // comparison parameter
   float eps = 1e-4f;
 
+  cudaEvent_t start, stop;
 
+  check_err(cudaEventCreate(&start));
+  check_err(cudaEventCreate(&stop));
 
 
   // matmul kernel
+  check_err(cudaEventRecord(start));
   matmul_kernel<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
+  check_err(cudaEventRecord(stop));
+  check_err(cudaEventSynchronize(stop));
 
   // copy result to host
   check_err(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
@@ -131,14 +137,20 @@ int main() {
     }
   }
 
-  printf("ok matmul kernel\n");
+  float ms = 0;
+  check_err(cudaEventElapsedTime(&ms, start, stop));
+
+  printf("ok matmul kernel: %fms\n", ms);
 
 
 
 
 
   // matmul kernel with b transpose
+  check_err(cudaEventRecord(start));
   matmul_kernel_b_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+  check_err(cudaEventRecord(stop));
+  check_err(cudaEventSynchronize(stop));
 
   // copy result to host
   check_err(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
@@ -150,8 +162,10 @@ int main() {
       return 1;
     }
   }
+  
+  check_err(cudaEventElapsedTime(&ms, start, stop));
 
-  printf("ok matmul kernel with b transpose");
+  printf("ok matmul kernel with b transpose: %fms\n", ms);
   
   
 
