@@ -40,6 +40,11 @@ int main (int argc, char **argv) {
   int desired_channels = 1; // grayscale
   int width, height, channels;
 
+  if (argc < 3){
+    fprintf(stderr, "please pass the input and output file\n");
+    return 1;
+  }
+
   const char *input_file = argv[1];
   const char *output_file = argv[2];
 
