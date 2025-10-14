@@ -9,11 +9,32 @@
 
 #include <stdio.h>
 
-// I am doing a grayscale blur
-// hence the data I am getting is in grayscale or can be converted to grayscale
-// then I need to average the pixels in the kernel
-// same idea one thread per pixel output
-// each thread just gets its surrounding kernel
+__global__ void grayscale_blur(unsigned char *in, unsigned char out*, size_t width, size_t height) {
+  size_t row = blockIdx.y * blockDim.y + threadIdx.y;
+  size_t col = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (row < height && col < width) {
+    int pixel_sum = 0;
+    int pixel_count = 0;
+
+    // sum all pixel values within tile whose 
+    // center is defined by the current pixel
+    for (int i = -1; i < 2; ++i) {
+      for (int j = -1; j < 2; ++j) {
+        int new_row = row + i;
+        int new_col = col + j;
+
+        // only contributes to the sum if within pixel box
+        if (new_row >= 0 && new_row < height && new_col >= 0 && new_col < width) {
+          pixel_sum += in[new_row * width + new_col];
+          pixel_count += 1;
+        }
+      }
+    }
+
+    out[row * width + col] = (unsigned char) ((float) pixel_sum / pixel_count);
+  } 
+}
 
 int main () {
   int desired_channels = 1; // grayscale
