@@ -21,12 +21,25 @@ __global__ void rgb_to_grayscale_kernel(unsigned char *in, unsigned char *out, s
   }
 }
 
-int main () {
+int main (int argc, char **argv) {
   int desired_channels = 3; // rgb
   int width, height, channels;
 
+  if (argc < 3) {
+    fprintf(stderr, "please pass the input and output file\n");
+    return 1;
+  }
+
+  const char *input_file = argv[1];
+  const char *output_file = argv[2];
+
+  if (!input_file || !output_file) {
+    fprintf(stderr, "please pass the input and output file\n");
+    return 1;
+  }
+
   // load img
-  unsigned char *img_data = stbi_load("images/sheeps.jpg", &width, &height, &channels, desired_channels);
+  unsigned char *img_data = stbi_load(input_file, &width, &height, &channels, desired_channels);
   if (!img_data) {
     fprintf(stderr, "Failed to load image: %s", stbi_failure_reason());
     return 1;
@@ -52,7 +65,7 @@ int main () {
   check_err(cudaMemcpy(grayscale_h, grayscale_d, pixels, cudaMemcpyDeviceToHost));
 
   // write grayscale to file
-  if (!stbi_write_png("images/sheeps_grayscale.png", width, height, 1, grayscale_h, width)) {
+  if (!stbi_write_png(output_file, width, height, 1, grayscale_h, width)) {
       fprintf(stderr, "Write failed!\n");
       stbi_image_free(img_data);
       return 1;
