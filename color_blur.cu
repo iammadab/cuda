@@ -1,3 +1,14 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "./external/stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "./external/stb_image_write.h"
+
+#define UTILS_IMPLEMENTATION
+#include "utils.h"
+
+#include <stdio.h>
+
 __global__ void color_blur(unsigned char *in, unsigned char *out, int width, int height, int channels) {
   int row = blockIdx.y * blockDim.y + threadIdx.y;
   int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -60,8 +71,8 @@ int main(int argc, char **argv) {
 
   // allocate GPU memory
   unsigned char *img_d, *blur_d;
-  check_err(cudaMalloc(&img_d, total_bytes);
-  check_err(cudaMalloc(&blur_d, total_bytes);
+  check_err(cudaMalloc(&img_d, total_bytes));
+  check_err(cudaMalloc(&blur_d, total_bytes));
 
   // copy image data to the gpu
   check_err(cudaMemcpy(img_d, img_h, total_bytes, cudaMemcpyHostToDevice));
@@ -69,7 +80,7 @@ int main(int argc, char **argv) {
   dim3 block(16, 16);
   dim3 grid(ceil(width / 16.0), ceil(height / 16.0));
 
-  color_blur<<<grid, block>>>(img_d, blur_d, width, height);
+  color_blur<<<grid, block>>>(img_d, blur_d, width, height, channels);
 
   // copy blur data from the gpu
   unsigned char *blur_h = (unsigned char *) malloc(total_bytes);
