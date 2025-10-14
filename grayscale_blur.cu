@@ -9,9 +9,9 @@
 
 #include <stdio.h>
 
-__global__ void grayscale_blur(unsigned char *in, unsigned char out*, size_t width, size_t height) {
-  size_t row = blockIdx.y * blockDim.y + threadIdx.y;
-  size_t col = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void grayscale_blur(unsigned char *in, unsigned char *out, int width, int height) {
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (row < height && col < width) {
     int pixel_sum = 0;
@@ -50,7 +50,7 @@ int main () {
     return 1;
   }
 
-  size_t pixels = width * height;
+  int pixels = width * height;
 
   // allocate GPU memory for input image and grayscale_blur output
   unsigned char *img_d, *blur_d;
@@ -60,10 +60,10 @@ int main () {
   // copy image data to the GPU
   check_err(cudaMemcpy(img_d, img_h, pixels, cudaMemcpyHostToDevice));
 
-  int block = 256;
-  int grid = ceil(pixels / 256.0);
+  dim3 block(16, 16, 1);
+  dim3 grid(ceil(width / 16.0), ceil(height / 16.0));
 
-  // TODO: launch kernel here
+  grayscale_blur<<<grid, block>>>(img_d, blur_d, width, height);
 
   // copy grayscale data from the gpu
   unsigned char *blur_h = (unsigned char *) malloc(pixels);
