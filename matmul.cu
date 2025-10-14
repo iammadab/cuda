@@ -80,6 +80,7 @@ int main() {
   float *A_h = rand_init(size_a);
   float *B_h = rand_init(size_b);
   float *C_h = malloc(size_c * sizeof(float));
+  float *C_h_cpu_result = malloc(size_c * sizeof(float));
 
   // compute the transpose of B
   float *B_h_transpose = transpose_arr(B_h, K, N);
@@ -95,6 +96,9 @@ int main() {
   check_err(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyHostToDevice));
   check_err(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyHostToDevice));
   check_err(cudaMemcpy(B_d_transpose, B_h_transpose, size_b * sizeof(float), cudaMemcpyHostToDevice));
+
+  // compute result on CPU for comparison
+  matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
 
   // launch the kernel
   dim3 block(16, 16);
