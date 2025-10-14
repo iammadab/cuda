@@ -1,12 +1,6 @@
 #define UTILS_IMPLEMENTATION
 #include "utils.h"
 
-// #ifndef M
-// #define M 10
-// #define K 10
-// #define N 10
-// #endif
-
 int M = 100;
 int K = 100;
 int N = 100;
@@ -76,7 +70,7 @@ float* transpose_arr(float *arr, int M, int N) {
 }
 
 int main() {
-  int size_a = M * N;
+  int size_a = M * K;
   int size_b = K * N;
   int size_c = M * N;
 
@@ -104,14 +98,13 @@ int main() {
   // compute result on CPU for comparison
   matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
 
-  // TODO: GPU Warmup
-  // TODO: figure out if you need to do warmup for both kernels
-
   // kernel parameters
   dim3 block(16, 16);
   dim3 grid(ceil(N / 16.0), ceil(M / 16.0));
 
   // comparison parameter
+  const int WARMUP_COUNT = 3;
+  const int REPEAT_COUNT = 10;
   float eps = 1e-4f;
 
   cudaEvent_t start, stop;
@@ -121,8 +114,18 @@ int main() {
 
 
   // matmul kernel
+  // warmup
+  for (int i = 0; i < WARMUP_COUNT; ++i) {
+    matmul_kernel<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
+  }
+  check_err(cudaDeviceSynchronize());
+
+
+  // timed run
   check_err(cudaEventRecord(start));
-  matmul_kernel<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
+  for (int i = 0; i < REPEAT_COUNT; ++i) {
+    matmul_kernel<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
+  }
   check_err(cudaEventRecord(stop));
   check_err(cudaEventSynchronize(stop));
 
@@ -139,6 +142,7 @@ int main() {
 
   float ms = 0;
   check_err(cudaEventElapsedTime(&ms, start, stop));
+  ms /= REPEAT_COUNT;
 
   printf("ok matmul kernel: %fms\n", ms);
 
@@ -147,8 +151,17 @@ int main() {
 
 
   // matmul kernel with b transpose
+  // warmup
+  for (int i = 0; i < WARMUP_COUNT; ++i) {
+    matmul_kernel_b_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+  }
+  check_err(cudaDeviceSynchronize());
+
+  // timed run
   check_err(cudaEventRecord(start));
-  matmul_kernel_b_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+  for (int i = 0; i < REPEAT_COUNT; ++i) {
+    matmul_kernel_b_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+  }
   check_err(cudaEventRecord(stop));
   check_err(cudaEventSynchronize(stop));
 
@@ -164,6 +177,7 @@ int main() {
   }
   
   check_err(cudaEventElapsedTime(&ms, start, stop));
+  ms /= REPEAT_COUNT;
 
   printf("ok matmul kernel with b transpose: %fms\n", ms);
   
