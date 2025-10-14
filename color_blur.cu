@@ -9,6 +9,10 @@
 
 #include <stdio.h>
 
+#ifndef BLUR_SIZE
+#define BLUR_SIZE 5
+#endif
+
 __global__ void color_blur(unsigned char *in, unsigned char *out, int width, int height, int channels) {
   int row = blockIdx.y * blockDim.y + threadIdx.y;
   int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -21,8 +25,8 @@ __global__ void color_blur(unsigned char *in, unsigned char *out, int width, int
   int pixel_count = 0;
 
 
-  for (int i = -1; i < 2; ++i) {
-    for (int j = -1; j < 2; ++j) {
+  for (int i = -BLUR_SIZE; i < BLUR_SIZE + 1; ++i) {
+    for (int j = -BLUR_SIZE; j < BLUR_SIZE + 1; ++j) {
       int new_row = row + i;
       int new_col = col + j;
 
@@ -87,8 +91,7 @@ int main(int argc, char **argv) {
   check_err(cudaMemcpy(blur_h, blur_d, total_bytes, cudaMemcpyDeviceToHost));
 
   // write 
-  // TODO: replace with correct stride
-  if (!stbi_write_png(output_file, width, height, 3, blur_h, width)) {
+  if (!stbi_write_png(output_file, width, height, channels, blur_h, width * channels)) {
     fprintf(stderr, "Write failed\n");
     stbi_image_free(img_h);
     return 1;
