@@ -183,6 +183,17 @@ int main() {
   
   
 
+  // free memory
+  free(A_h);
+  free(B_h);
+  free(C_h);
+  free(C_h_cpu_result);
+  free(B_h_transpose);
+  cudaFree(A_d);
+  cudaFree(B_d);
+  cudaFree(B_d_transpose);
+  cudaFree(C_d);
+
 
   return 0;
 }
