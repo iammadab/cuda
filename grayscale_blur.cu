@@ -19,6 +19,7 @@ __global__ void grayscale_blur(unsigned char *in, unsigned char *out, int width,
 
     // sum all pixel values within tile whose 
     // center is defined by the current pixel
+    // 3 x 3 blur
     for (int i = -1; i < 2; ++i) {
       for (int j = -1; j < 2; ++j) {
         int new_row = row + i;
