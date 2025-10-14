@@ -15,6 +15,48 @@
 // B = (K, N)
 // C = (M, N)
 
+// TODO: add comments explaining the indexing for future me
+
+__global__ void matmul_kernel(float *A, float *B, float *C, int M, int N, int K) {
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (row >= M || col >= N) return;
+
+  float sum = 0;
+  for (int i = 0; i < K; ++i) {
+    sum += A[row * K + i] * B[col + i * N]; 
+  }
+
+  C[row * N + col] = sum;
+}
+
+__global__ void matmul_kernel_b_transpose(float *A, float *B, float *C, int M, int N, int K) {
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (row >= M || col >= N) return;
+
+  float sum = 0;
+  for (int i = 0; i < K; ++i) {
+    sum += A[row * K + i] * B[col * K + i]; 
+  }
+
+  C[row * N + col] = sum;
+}
+
+void matmul_cpu(float *A, float *B, float *C, int M, int N, int K) {
+  for (int r = 0; r < M; ++r) {
+    for (int c = 0; c < N; ++c) {
+      float sum = 0;
+      for (int i = 0; i < K; ++i) {
+        sum += A[r * K + i] * B[c + i * N];
+      }
+      C[r * N + c] = sum;
+    }
+  }
+}
+
 int main() {
   int size_a = M * N;
   int size_b = K * N;
