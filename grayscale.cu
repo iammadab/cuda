@@ -1,8 +1,8 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "./external/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include "./external/stb_image_write.h"
 
 #define UTILS_IMPLEMENTATION
 #include "utils.h"
@@ -52,7 +52,6 @@ int main () {
   check_err(cudaMemcpy(grayscale_h, grayscale_d, pixels, cudaMemcpyDeviceToHost));
 
   // write grayscale to file
-  int stride = width * desired_channels; // tightly packed, no data alignment
   if (!stbi_write_png("images/sheeps_grayscale.png", width, height, 1, grayscale_h, width)) {
       fprintf(stderr, "Write failed!\n");
       stbi_image_free(img_data);
