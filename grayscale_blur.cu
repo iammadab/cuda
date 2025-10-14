@@ -36,12 +36,17 @@ __global__ void grayscale_blur(unsigned char *in, unsigned char *out, int width,
   } 
 }
 
-int main () {
+int main (int argc, char **argv) {
   int desired_channels = 1; // grayscale
   int width, height, channels;
 
-  const char *input_file = "images/sheeps.jpg";
-  const char *output_file = "images/sheeps_grayscale_blur.png";
+  const char *input_file = argv[1];
+  const char *output_file = argv[2];
+
+  if (!input_file || !output_file) {
+    fprintf(stderr, "please pass the input and output file\n");
+    return 1;
+  }
 
   // load img
   unsigned char *img_h = stbi_load(input_file, &width, &height, &channels, desired_channels);
