@@ -1,11 +1,15 @@
 #define UTILS_IMPLEMENTATION
 #include "utils.h"
 
-#ifndef M
-#define M 10
-#define K 10
-#define N 10
-#endif
+// #ifndef M
+// #define M 10
+// #define K 10
+// #define N 10
+// #endif
+
+int M = 100;
+int K = 100;
+int N = 100;
 
 // MATMUL KERNEL
 // C = A x B
@@ -61,7 +65,7 @@ void matmul_cpu(float *A, float *B, float *C, int M, int N, int K) {
 /// returns a pointer to a new matrix (N, M)
 /// with the data transposed
 float* transpose_arr(float *arr, int M, int N) {
-  float *result = malloc(M * N * sizeof(float));
+  float *result = (float*) malloc(M * N * sizeof(float));
   for (int r = 0; r < M; ++r) {
     for (int c = 0; c < N; ++c) {
       // (r, c) -> (c, r)
@@ -79,8 +83,8 @@ int main() {
   // allocate memory on host
   float *A_h = rand_init(size_a);
   float *B_h = rand_init(size_b);
-  float *C_h = malloc(size_c * sizeof(float));
-  float *C_h_cpu_result = malloc(size_c * sizeof(float));
+  float *C_h = (float*) malloc(size_c * sizeof(float));
+  float *C_h_cpu_result = (float*) malloc(size_c * sizeof(float));
 
   // compute the transpose of B
   float *B_h_transpose = transpose_arr(B_h, K, N);
@@ -100,17 +104,57 @@ int main() {
   // compute result on CPU for comparison
   matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
 
-  // launch the kernel
+  // TODO: GPU Warmup
+  // TODO: figure out if you need to do warmup for both kernels
+
+  // kernel parameters
   dim3 block(16, 16);
   dim3 grid(ceil(N / 16.0), ceil(M / 16.0));
-  matmul_kernel<<<grid, block>>>(A_d, B_d, C_d, M, N);
 
-  // TODO: implement CPU matmul for correctness testing
+  // comparison parameter
+  float eps = 1e-4f;
+
+
+
+
+  // matmul kernel
+  matmul_kernel<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
 
   // copy result to host
   check_err(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaDeviceSynchronize();
 
-  // TODO: compare against the CPUs matmul computation
+  for (int i = 0; i < size_c; i++) {
+    if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
+      fprintf(stderr, "result mismatch");
+      return 1;
+    }
+  }
+
+  printf("ok matmul kernel\n");
+
+
+
+
+
+  // matmul kernel with b transpose
+  matmul_kernel_b_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+
+  // copy result to host
+  check_err(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaDeviceSynchronize();
+
+  for (int i = 0; i < size_c; i++) {
+    if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
+      fprintf(stderr, "result mismatch");
+      return 1;
+    }
+  }
+
+  printf("ok matmul kernel with b transpose");
+  
+  
+
 
   return 0;
 }
