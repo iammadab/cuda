@@ -81,15 +81,20 @@ int main() {
   float *B_h = rand_init(size_b);
   float *C_h = malloc(size_c * sizeof(float));
 
+  // compute the transpose of B
+  float *B_h_transpose = transpose_arr(B_h, K, N);
+
   // allocate memory on device
-  float *A_d, *B_d, *C_d;
+  float *A_d, *B_d, *B_d_transpose, *C_d;
   check_err(cudaMalloc(&A_d, size_a * sizeof(float)));
   check_err(cudaMalloc(&B_d, size_b * sizeof(float)));
+  check_err(cudaMalloc(&B_d_transpose, size_b * sizeof(float)));
   check_err(cudaMalloc(&C_d, size_c * sizeof(float)));
 
-  // move the A and B matrice to device
+  // move the A and B matrices to device
   check_err(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyHostToDevice));
   check_err(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyHostToDevice));
+  check_err(cudaMemcpy(B_d_transpose, B_h_transpose, size_b * sizeof(float), cudaMemcpyHostToDevice));
 
   // launch the kernel
   dim3 block(16, 16);
