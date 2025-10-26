@@ -55,13 +55,13 @@ int main() {
 
   // allocate memory on device
   float *A_d, *B_d, *C_d;
-  check_err(cudaMalloc(&A_d, size_a * sizeof(float)));
-  check_err(cudaMalloc(&B_d, size_b * sizeof(float)));
-  check_err(cudaMalloc(&C_d, size_c * sizeof(float)));
+  CHECK_ERR(cudaMalloc(&A_d, size_a * sizeof(float)));
+  CHECK_ERR(cudaMalloc(&B_d, size_b * sizeof(float)));
+  CHECK_ERR(cudaMalloc(&C_d, size_c * sizeof(float)));
 
   // copy data to host
-  check_err(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyDeviceToHost));
-  check_err(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyDeviceToHost));
 
   // compute expected answer on the cpu
   matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
@@ -76,25 +76,25 @@ int main() {
   float eps = 1e-4f;
 
   cudaEvent_t start, stop;
-  check_err(cudaEventCreate(&start));
-  check_err(cudaEventCreate(&start));
+  CHECK_ERR(cudaEventCreate(&start));
+  CHECK_ERR(cudaEventCreate(&start));
 
   // tiled matmul kernel
   for (int i = 0; i < WARMUP_COUNT; ++i) {
     matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, K);
   }
-  check_err(cudaDeviceSynchronize());
+  CHECK_ERR(cudaDeviceSynchronize());
 
   // timed run
-  check_err(cudaEventRecord(start));
+  CHECK_ERR(cudaEventRecord(start));
   for (int i = 0; i < REPEAT_COUNT; ++i) {
     matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, K);
   }
-  check_err(cudaEventRecord(stop));
-  check_err(cudaEventSynchronize(stop));
+  CHECK_ERR(cudaEventRecord(stop));
+  CHECK_ERR(cudaEventSynchronize(stop));
 
   // copy result to host
-  check_err(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
   for (int i = 0; i < size_c; ++i) {
@@ -105,7 +105,7 @@ int main() {
   }
 
   float ms = 0;
-  check_err(cudaEventElapsedTime(&ms, start, stop));
+  CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
   ms /= REPEAT_COUNT;
 
   printf("ok tiled matmul: %fms\n", ms);
