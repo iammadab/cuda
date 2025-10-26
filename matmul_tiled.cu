@@ -59,10 +59,16 @@ int main() {
   check_err(cudaMalloc(&B_d, size_b * sizeof(float)));
   check_err(cudaMalloc(&C_d, size_c * sizeof(float)));
 
-  // TODO: move the data to the GPU
+  // copy data to host
+  check_err(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyDeviceToHost));
+  check_err(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyDeviceToHost));
 
   // compute expected answer on the cpu
-  matmul_cpu(A_h, B_h, C_h_cpu_result, K);
+  matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
+
+  // kernel parameters
+  dim3 block(TILE_WIDTH, TILE_WIDTH);
+  dim3 grid(ceil(N / (float) TILE_WIDTH), ceil(M / (float) TILE_WIDTH));
 
   // TODO: use the tile_width as the block size
   // TODO: compute the GRID size accordingly
