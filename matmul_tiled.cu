@@ -1,9 +1,9 @@
 #define UTILS_IMPLEMENTATION
 #include "utils.h"
 
-int M = 100;
-int K = 100;
-int N = 100;
+int M = 320;
+int K = 320;
+int N = 320;
 
 // MATMUL KERNEL
 // C = A x B
@@ -29,12 +29,12 @@ __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int K) {
   float sum = 0;
 
   for (int phase = 0; phase < K / TILE_WIDTH; ++phase) {
-    Ads[row][col] = A[row * K + (phase * TILE_WIDTH + threadIdx.x)];
-    Bds[row][col] = B[(phase * TILE_WIDTH + threadIdx.y) * K + col];
+    Ads[threadIdx.y][threadIdx.x] = A[row * K + (phase * TILE_WIDTH + threadIdx.x)];
+    Bds[threadIdx.y][threadIdx.x] = B[(phase * TILE_WIDTH + threadIdx.y) * K + col];
     __syncthreads();
-
+  
     for (int i = 0; i < TILE_WIDTH; ++i) {
-      sum += Ads[row][i] * Bds[i][col];
+      sum += Ads[threadIdx.y][i] * Bds[i][threadIdx.x];
     }
     __syncthreads();
   }
@@ -77,7 +77,7 @@ int main() {
 
   cudaEvent_t start, stop;
   CHECK_ERR(cudaEventCreate(&start));
-  CHECK_ERR(cudaEventCreate(&start));
+  CHECK_ERR(cudaEventCreate(&stop));
 
   // tiled matmul kernel
   for (int i = 0; i < WARMUP_COUNT; ++i) {
