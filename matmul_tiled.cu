@@ -70,8 +70,54 @@ int main() {
   dim3 block(TILE_WIDTH, TILE_WIDTH);
   dim3 grid(ceil(N / (float) TILE_WIDTH), ceil(M / (float) TILE_WIDTH));
 
-  // TODO: use the tile_width as the block size
-  // TODO: compute the GRID size accordingly
+  // comparison parameters
+  const int WARMUP_COUNT = 3;
+  const int REPEAT_COUNT = 10;
+  float eps = 1e-4f;
+
+  cudaEvent_t start, stop;
+  check_err(cudaEventCreate(&start));
+  check_err(cudaEventCreate(&start));
+
+  // tiled matmul kernel
+  for (int i = 0; i < WARMUP_COUNT; ++i) {
+    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, K);
+  }
+  check_err(cudaDeviceSynchronize());
+
+  // timed run
+  check_err(cudaEventRecord(start));
+  for (int i = 0; i < REPEAT_COUNT; ++i) {
+    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, K);
+  }
+  check_err(cudaEventRecord(stop));
+  check_err(cudaEventSynchronize(stop));
+
+  // copy result to host
+  check_err(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaDeviceSynchronize();
+
+  for (int i = 0; i < size_c; ++i) {
+    if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
+      fprintf(stderr, "result mismatch");
+      return 1;
+    }
+  }
+
+  float ms = 0;
+  check_err(cudaEventElapsedTime(&ms, start, stop));
+  ms /= REPEAT_COUNT;
+
+  printf("ok tiled matmul: %fms\n", ms);
+
+  // free memory
+  free(A_h);
+  free(B_h);
+  free(C_h);
+  free(C_h_cpu_result);
+  cudaFree(A_d);
+  cudaFree(B_d);
+  cudaFree(C_d);
 
   return 0;
 }
