@@ -6,7 +6,6 @@
 
 void print_arr(float* Arr, size_t N);
 float* rand_init(size_t N);
-void check_err(cudaError_t resp);
 void matmul_cpu(float *A, float *B, float *C, int M, int N, int K);
 
 #endif

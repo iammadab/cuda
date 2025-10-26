@@ -50,11 +50,11 @@ int main (int argc, char **argv) {
 
   // allocate GPU memory for input image and grayscale output
   unsigned char *img_d, *grayscale_d;
-  check_err(cudaMalloc(&img_d, total_img_bytes * sizeof(unsigned char)));
-  check_err(cudaMalloc(&grayscale_d, pixels * sizeof(unsigned char)));
+  CHECK_ERR(cudaMalloc(&img_d, total_img_bytes * sizeof(unsigned char)));
+  CHECK_ERR(cudaMalloc(&grayscale_d, pixels * sizeof(unsigned char)));
 
   // copy image data to the GPU
-  check_err(cudaMemcpy(img_d, img_data, total_img_bytes, cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(img_d, img_data, total_img_bytes, cudaMemcpyHostToDevice));
 
   int block = 256;
   int grid = ceil(pixels / 256.0);
@@ -62,7 +62,7 @@ int main (int argc, char **argv) {
 
   // copy grayscale data from the gpu
   unsigned char *grayscale_h = (unsigned char *) malloc(pixels);
-  check_err(cudaMemcpy(grayscale_h, grayscale_d, pixels, cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(grayscale_h, grayscale_d, pixels, cudaMemcpyDeviceToHost));
 
   // write grayscale to file
   if (!stbi_write_png(output_file, width, height, 1, grayscale_h, width)) {

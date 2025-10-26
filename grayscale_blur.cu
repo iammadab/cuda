@@ -65,11 +65,11 @@ int main (int argc, char **argv) {
 
   // allocate GPU memory for input image and grayscale_blur output
   unsigned char *img_d, *blur_d;
-  check_err(cudaMalloc(&img_d, pixels * sizeof(unsigned char)));
-  check_err(cudaMalloc(&blur_d, pixels * sizeof(unsigned char)));
+  CHECK_ERR(cudaMalloc(&img_d, pixels * sizeof(unsigned char)));
+  CHECK_ERR(cudaMalloc(&blur_d, pixels * sizeof(unsigned char)));
 
   // copy image data to the GPU
-  check_err(cudaMemcpy(img_d, img_h, pixels, cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(img_d, img_h, pixels, cudaMemcpyHostToDevice));
 
   dim3 block(16, 16, 1);
   dim3 grid(ceil(width / 16.0), ceil(height / 16.0));
@@ -78,7 +78,7 @@ int main (int argc, char **argv) {
 
   // copy grayscale data from the gpu
   unsigned char *blur_h = (unsigned char *) malloc(pixels);
-  check_err(cudaMemcpy(blur_h, blur_d, pixels, cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(blur_h, blur_d, pixels, cudaMemcpyDeviceToHost));
 
   // write grayscale to file
   if (!stbi_write_png(output_file, width, height, 1, blur_h, width)) {
