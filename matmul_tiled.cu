@@ -19,7 +19,7 @@ int N = 320;
 
 // TODO: handle irregular sized tile_widths
 
-__global__ void matmul_kernel_tiled(float *A, float *B, float *C, int K) {
+__global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N, int K) {
   int row = blockIdx.y * blockDim.y + threadIdx.y;
   int col = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -30,7 +30,7 @@ __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int K) {
 
   for (int phase = 0; phase < K / TILE_WIDTH; ++phase) {
     Ads[threadIdx.y][threadIdx.x] = A[row * K + (phase * TILE_WIDTH + threadIdx.x)];
-    Bds[threadIdx.y][threadIdx.x] = B[(phase * TILE_WIDTH + threadIdx.y) * K + col];
+    Bds[threadIdx.y][threadIdx.x] = B[(phase * TILE_WIDTH + threadIdx.y) * N + col];
     __syncthreads();
   
     for (int i = 0; i < TILE_WIDTH; ++i) {
@@ -39,7 +39,7 @@ __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int K) {
     __syncthreads();
   }
 
-  C[row * K + col] = sum;
+  C[row * N + col] = sum;
 }
 
 int main() {
@@ -59,9 +59,10 @@ int main() {
   CHECK_ERR(cudaMalloc(&B_d, size_b * sizeof(float)));
   CHECK_ERR(cudaMalloc(&C_d, size_c * sizeof(float)));
 
+
   // copy data to host
-  CHECK_ERR(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyDeviceToHost));
-  CHECK_ERR(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyHostToDevice));
 
   // compute expected answer on the cpu
   matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
@@ -81,14 +82,14 @@ int main() {
 
   // tiled matmul kernel
   for (int i = 0; i < WARMUP_COUNT; ++i) {
-    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, K);
+    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
   }
   CHECK_ERR(cudaDeviceSynchronize());
 
   // timed run
   CHECK_ERR(cudaEventRecord(start));
   for (int i = 0; i < REPEAT_COUNT; ++i) {
-    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, K);
+    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
   }
   CHECK_ERR(cudaEventRecord(stop));
   CHECK_ERR(cudaEventSynchronize(stop));
