@@ -7,6 +7,7 @@
 void print_arr(float* Arr, size_t N);
 float* rand_init(size_t N);
 void check_err(cudaError_t resp);
+void matmul_cpu(float *A, float *B, float *C, int M, int N, int K);
 
 #endif
 
@@ -34,6 +35,18 @@ void check_err(cudaError_t resp) {
   if (resp != cudaSuccess) {
     printf("%s in %s at line %d\n", cudaGetErrorString(resp), __FILE__, __LINE__);
     exit(EXIT_FAILURE);
+  }
+}
+
+void matmul_cpu(float *A, float *B, float *C, int M, int N, int K) {
+  for (int r = 0; r < M; ++r) {
+    for (int c = 0; c < N; ++c) {
+      float sum = 0;
+      for (int i = 0; i < K; ++i) {
+        sum += A[r * K + i] * B[c + i * N];
+      }
+      C[r * N + c] = sum;
+    }
   }
 }
 
