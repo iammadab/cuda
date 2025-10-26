@@ -7,12 +7,12 @@ int main() {
   int device_count;
   cudaDeviceProp device_prop;
 
-  check_err(cudaGetDeviceCount(&device_count));
+  CHECK_ERR(cudaGetDeviceCount(&device_count));
 
   printf("Detected %d CUDA capable device(s)\n\n", device_count);
 
   for (int i = 0; i < device_count; ++i) {
-    check_err(cudaGetDeviceProperties(&device_prop, i));
+    CHECK_ERR(cudaGetDeviceProperties(&device_prop, i));
 
     printf("Device: %s\n", device_prop.name);
     printf("Device Capability: %d.%d\n", device_prop.major, device_prop.minor);

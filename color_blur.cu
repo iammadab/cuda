@@ -75,11 +75,11 @@ int main(int argc, char **argv) {
 
   // allocate GPU memory
   unsigned char *img_d, *blur_d;
-  check_err(cudaMalloc(&img_d, total_bytes));
-  check_err(cudaMalloc(&blur_d, total_bytes));
+  CHECK_ERR(cudaMalloc(&img_d, total_bytes));
+  CHECK_ERR(cudaMalloc(&blur_d, total_bytes));
 
   // copy image data to the gpu
-  check_err(cudaMemcpy(img_d, img_h, total_bytes, cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(img_d, img_h, total_bytes, cudaMemcpyHostToDevice));
 
   dim3 block(16, 16);
   dim3 grid(ceil(width / 16.0), ceil(height / 16.0));
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 
   // copy blur data from the gpu
   unsigned char *blur_h = (unsigned char *) malloc(total_bytes);
-  check_err(cudaMemcpy(blur_h, blur_d, total_bytes, cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(blur_h, blur_d, total_bytes, cudaMemcpyDeviceToHost));
 
   // write 
   if (!stbi_write_png(output_file, width, height, channels, blur_h, width * channels)) {

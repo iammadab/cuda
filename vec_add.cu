@@ -18,19 +18,19 @@ void vec_add(float *A_h, float* B_h, float* C_h, int n) {
   float *A_d, *B_d, *C_d;
 
   // Part 1: Allocate device memory for A, B and C
-  check_err(cudaMalloc(&A_d, size));
-  check_err(cudaMalloc(&B_d, size));
-  check_err(cudaMalloc(&C_d, size));
+  CHECK_ERR(cudaMalloc(&A_d, size));
+  CHECK_ERR(cudaMalloc(&B_d, size));
+  CHECK_ERR(cudaMalloc(&C_d, size));
   
   // Copy A and B to device memory
   // (dest, source, size, direction)
-  check_err(cudaMemcpy(A_d, A_h, size, cudaMemcpyHostToDevice));
-  check_err(cudaMemcpy(B_d, B_h, size, cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(A_d, A_h, size, cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(B_d, B_h, size, cudaMemcpyHostToDevice));
 
   // create cuda events for timing
   cudaEvent_t start, stop;
-  check_err(cudaEventCreate(&start));
-  check_err(cudaEventCreate(&stop));
+  CHECK_ERR(cudaEventCreate(&start));
+  CHECK_ERR(cudaEventCreate(&stop));
 
   int grid_size = ceil(n/256.0);
   int block_size = 256;
@@ -46,31 +46,31 @@ void vec_add(float *A_h, float* B_h, float* C_h, int n) {
 
   for (int i = 0; i < runs; i++) {
     // Record the start event
-    check_err(cudaEventRecord(start));
+    CHECK_ERR(cudaEventRecord(start));
     
     // Part 2: call kernel - to launch a grid of threads
     // to perform the actual vector addition
     vec_add_kernel<<<ceil(n/256.0), 256>>>(A_d, B_d, C_d, size);
 
     // Record the stop event
-    check_err(cudaEventRecord(stop));
-    check_err(cudaEventSynchronize(stop));
+    CHECK_ERR(cudaEventRecord(stop));
+    CHECK_ERR(cudaEventSynchronize(stop));
 
     // calculate the elapsed time
     float ms = 0;
-    check_err(cudaEventElapsedTime(&ms, start, stop));
+    CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
     total_ms += ms;
   }
 
   printf("Average kernel execution time: %f ms \n", total_ms / runs);
 
   // Part 3: Copy C from this device memory
-  check_err(cudaMemcpy(C_h, C_d, size, cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(C_h, C_d, size, cudaMemcpyDeviceToHost));
 
   // Free device vectors
-  check_err(cudaFree(A_d));
-  check_err(cudaFree(B_d));
-  check_err(cudaFree(C_d));
+  CHECK_ERR(cudaFree(A_d));
+  CHECK_ERR(cudaFree(B_d));
+  CHECK_ERR(cudaFree(C_d));
 }
 
 int main() {

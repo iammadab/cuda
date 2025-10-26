@@ -73,15 +73,15 @@ int main() {
 
   // allocate memory on device
   float *A_d, *B_d, *B_d_transpose, *C_d;
-  check_err(cudaMalloc(&A_d, size_a * sizeof(float)));
-  check_err(cudaMalloc(&B_d, size_b * sizeof(float)));
-  check_err(cudaMalloc(&B_d_transpose, size_b * sizeof(float)));
-  check_err(cudaMalloc(&C_d, size_c * sizeof(float)));
+  CHECK_ERR(cudaMalloc(&A_d, size_a * sizeof(float)));
+  CHECK_ERR(cudaMalloc(&B_d, size_b * sizeof(float)));
+  CHECK_ERR(cudaMalloc(&B_d_transpose, size_b * sizeof(float)));
+  CHECK_ERR(cudaMalloc(&C_d, size_c * sizeof(float)));
 
   // move the A and B matrices to device
-  check_err(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyHostToDevice));
-  check_err(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyHostToDevice));
-  check_err(cudaMemcpy(B_d_transpose, B_h_transpose, size_b * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(B_d_transpose, B_h_transpose, size_b * sizeof(float), cudaMemcpyHostToDevice));
 
   // compute result on CPU for comparison
   matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
@@ -97,8 +97,8 @@ int main() {
 
   cudaEvent_t start, stop;
 
-  check_err(cudaEventCreate(&start));
-  check_err(cudaEventCreate(&stop));
+  CHECK_ERR(cudaEventCreate(&start));
+  CHECK_ERR(cudaEventCreate(&stop));
 
 
   // matmul kernel
@@ -106,19 +106,19 @@ int main() {
   for (int i = 0; i < WARMUP_COUNT; ++i) {
     matmul_kernel<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
   }
-  check_err(cudaDeviceSynchronize());
+  CHECK_ERR(cudaDeviceSynchronize());
 
 
   // timed run
-  check_err(cudaEventRecord(start));
+  CHECK_ERR(cudaEventRecord(start));
   for (int i = 0; i < REPEAT_COUNT; ++i) {
     matmul_kernel<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
   }
-  check_err(cudaEventRecord(stop));
-  check_err(cudaEventSynchronize(stop));
+  CHECK_ERR(cudaEventRecord(stop));
+  CHECK_ERR(cudaEventSynchronize(stop));
 
   // copy result to host
-  check_err(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
   for (int i = 0; i < size_c; i++) {
@@ -129,7 +129,7 @@ int main() {
   }
 
   float ms = 0;
-  check_err(cudaEventElapsedTime(&ms, start, stop));
+  CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
   ms /= REPEAT_COUNT;
 
   printf("ok matmul kernel: %fms\n", ms);
@@ -143,18 +143,18 @@ int main() {
   for (int i = 0; i < WARMUP_COUNT; ++i) {
     matmul_kernel_b_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
   }
-  check_err(cudaDeviceSynchronize());
+  CHECK_ERR(cudaDeviceSynchronize());
 
   // timed run
-  check_err(cudaEventRecord(start));
+  CHECK_ERR(cudaEventRecord(start));
   for (int i = 0; i < REPEAT_COUNT; ++i) {
     matmul_kernel_b_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
   }
-  check_err(cudaEventRecord(stop));
-  check_err(cudaEventSynchronize(stop));
+  CHECK_ERR(cudaEventRecord(stop));
+  CHECK_ERR(cudaEventSynchronize(stop));
 
   // copy result to host
-  check_err(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
+  CHECK_ERR(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
   for (int i = 0; i < size_c; i++) {
@@ -164,7 +164,7 @@ int main() {
     }
   }
   
-  check_err(cudaEventElapsedTime(&ms, start, stop));
+  CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
   ms /= REPEAT_COUNT;
 
   printf("ok matmul kernel with b transpose: %fms\n", ms);
