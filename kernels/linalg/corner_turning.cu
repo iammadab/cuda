@@ -1,10 +1,3 @@
-// I believe this is the same thing as matmul tiled?
-// but just that B was transposed
-// what will be the quickest way to test this out?
-// I have a transpose array function, I should move that to utils
-//
-// TODO: move tranpose array to utils
-
 #define UTILS_IMPLEMENTATION
 #include "../../include/utils.h"
 
@@ -19,8 +12,6 @@ int N = 320;
 // A = (M, K)
 // B = (K, N)
 // C = (M, N)
-
-// TODO: plot improvement with different tile widths
 
 #define TILE_WIDTH 16
 
@@ -70,16 +61,19 @@ int main() {
   float *C_h = (float *) malloc(size_c * sizeof(float));
   float *C_h_cpu_result = (float *) malloc(size_c * sizeof(float));
 
+  // compute the transpose of B
+  float *B_h_transpose = transpose_arr(B_h, K, N);
+
   // allocate memory on device
-  float *A_d, *B_d, *C_d;
+  float *A_d, *B_d_transpose, *C_d;
   CHECK_ERR(cudaMalloc(&A_d, size_a * sizeof(float)));
-  CHECK_ERR(cudaMalloc(&B_d, size_b * sizeof(float)));
+  CHECK_ERR(cudaMalloc(&B_d_transpose, size_b * sizeof(float)));
   CHECK_ERR(cudaMalloc(&C_d, size_c * sizeof(float)));
 
 
   // copy data to host
   CHECK_ERR(cudaMemcpy(A_d, A_h, size_a * sizeof(float), cudaMemcpyHostToDevice));
-  CHECK_ERR(cudaMemcpy(B_d, B_h, size_b * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_ERR(cudaMemcpy(B_d_transpose, B_h_transpose, size_b * sizeof(float), cudaMemcpyHostToDevice));
 
   // compute expected answer on the cpu
   matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
@@ -97,16 +91,20 @@ int main() {
   CHECK_ERR(cudaEventCreate(&start));
   CHECK_ERR(cudaEventCreate(&stop));
 
+
+
+
+
   // tiled matmul kernel
   for (int i = 0; i < WARMUP_COUNT; ++i) {
-    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
+    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
   }
   CHECK_ERR(cudaDeviceSynchronize());
 
   // timed run
   CHECK_ERR(cudaEventRecord(start));
   for (int i = 0; i < REPEAT_COUNT; ++i) {
-    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
+    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
   }
   CHECK_ERR(cudaEventRecord(stop));
   CHECK_ERR(cudaEventSynchronize(stop));
@@ -117,7 +115,7 @@ int main() {
 
   for (int i = 0; i < size_c; ++i) {
     if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
-      fprintf(stderr, "result mismatch");
+      fprintf(stderr, "result mismatch\n");
       return 1;
     }
   }
@@ -128,13 +126,16 @@ int main() {
 
   printf("ok tiled matmul: %fms\n", ms);
 
+
+
+
   // free memory
   free(A_h);
   free(B_h);
   free(C_h);
   free(C_h_cpu_result);
   cudaFree(A_d);
-  cudaFree(B_d);
+  cudaFree(B_d_transpose);
   cudaFree(C_d);
 
   return 0;
