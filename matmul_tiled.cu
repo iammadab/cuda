@@ -1,9 +1,9 @@
 #define UTILS_IMPLEMENTATION
 #include "utils.h"
 
-int M = 100;
-int K = 100;
-int N = 100;
+int M = 320;
+int K = 320;
+int N = 320;
 
 // MATMUL KERNEL
 // C = A x B
@@ -26,14 +26,17 @@ __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N, 
 
   float sum = 0;
 
-  for (int phase = 0; phase < K / TILE_WIDTH; ++phase) {
-    if (row < M && col < K)
-      Ads[threadIdx.y][threadIdx.x] = A[row * K + (phase * TILE_WIDTH + threadIdx.x)];
+  for (int phase = 0; phase < (K + TILE_WIDTH - 1) / TILE_WIDTH; ++phase) {
+    int ph_row = phase * TILE_WIDTH + threadIdx.y;
+    int ph_col = phase * TILE_WIDTH + threadIdx.x;
+
+    if (row < M && ph_col < K)
+      Ads[threadIdx.y][threadIdx.x] = A[row * K + ph_col];
     else
       Ads[threadIdx.y][threadIdx.x] = 0.0f;
 
-    if (row < K && col < N)
-      Bds[threadIdx.y][threadIdx.x] = B[(phase * TILE_WIDTH + threadIdx.y) * N + col];
+    if (ph_row < K && col < N)
+      Bds[threadIdx.y][threadIdx.x] = B[ph_row * N + col];
     else
       Bds[threadIdx.y][threadIdx.x] = 0.0f;
 
