@@ -65,6 +65,44 @@ __global__ void matmul_kernel_tiled_transpose(float *A, float *B, float *C, int 
     C[row * N + col] = sum;
 }
 
+// TODO: come up with a better explanation
+__global__ void corner_turning_tiled(float *A, float *B, float *C, int M, int N, int K) {
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+  __shared__ float Ads[TILE_WIDTH][TILE_WIDTH];
+  __shared__ float Bds[TILE_WIDTH][TILE_WIDTH];
+
+  float sum = 0;
+
+  for (int phase = 0; phase < (K + TILE_WIDTH - 1) / TILE_WIDTH; ++phase) {
+    int ph_col = phase * TILE_WIDTH + threadIdx.x;
+
+    if (row < M && ph_col < K)
+      Ads[threadIdx.y][threadIdx.x] = A[row * K + ph_col];
+    else
+      Ads[threadIdx.y][threadIdx.x] = 0.0f;
+
+    int col_n = blockIdx.x * blockDim.x + threadIdx.y;
+    int ph_row_n = phase * TILE_WIDTH + threadIdx.x;
+
+    if (ph_row_n < K && col_n < N)
+      Bds[threadIdx.x][threadIdx.y] = B[col_n * K + ph_row_n];
+    else
+      Bds[threadIdx.x][threadIdx.y] = 0.0f;
+
+    __syncthreads();
+  
+    for (int i = 0; i < TILE_WIDTH; ++i) {
+      sum += Ads[threadIdx.y][i] * Bds[i][threadIdx.x];
+    }
+    __syncthreads();
+  }
+
+  if (row < M && col < N)
+    C[row * N + col] = sum;
+}
+
 int main() {
   int size_a = M * K;
   int size_b = K * N;
@@ -139,7 +177,38 @@ int main() {
   CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
   ms /= REPEAT_COUNT;
 
-  printf("ok tiled matmul: %fms\n", ms);
+  printf("ok transposed tiled matmul: %fms\n", ms);
+
+
+  // corner turning kernel
+  for (int i = 0; i < WARMUP_COUNT; ++i) {
+    corner_turning_tiled<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+  }
+  CHECK_ERR(cudaDeviceSynchronize());
+
+  // timed run
+  CHECK_ERR(cudaEventRecord(start));
+  for (int i = 0; i < REPEAT_COUNT; ++i) {
+    corner_turning_tiled<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+  }
+  CHECK_ERR(cudaEventRecord(stop));
+  CHECK_ERR(cudaEventSynchronize(stop));
+
+  // copy result to host
+  CHECK_ERR(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaDeviceSynchronize();
+
+  for (int i = 0; i < size_c; ++i) {
+    if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
+      fprintf(stderr, "result mismatch\n");
+      return 1;
+    }
+  }
+
+  CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
+  ms /= REPEAT_COUNT;
+
+  printf("ok tiled corner turning: %fms\n", ms);
 
 
 
