@@ -1,20 +1,28 @@
 NVCC := nvcc
 EXT := .bin
 
-.PHONY: run build clean
+.PHONY: run build kernel clean
 
 # usage: make run FILE=matmul.cu
 # expands to nvcc matmul.cu -o matmul.bin && ./matmul.bin
 run:
 	@test -n "$(FILE)" || { echo "usage: make run FILE=<source>.cu"; exit 2; }
-	@stripped_name=$(basename -- "$(FILE)" .cu); out=$$stripped_name$(EXT); \
-		$(NVCC) "$(FILE)" -o "$$out" && "./$$out"
+	@stripped_name=$(basename $(FILE) .cu); out=$$stripped_name$(EXT); \
+	$(NVCC) "$(FILE)" -o $$out && ./$$out
+
 
 # usage: make build FILE=matmul.cu
 build:
 	@test -n "$(FILE)" || { echo "usage: make build FILE=<source>.cu"; exit 2; }
-	@stripped_name=$(basename -- "$(FILE)" .cu); out=$$stripped_name$(EXT); \
-		$(NVCC) "$(FILE)" -o "$$out"
+	@stripped_name=$(basename $(FILE) .cu); out=$$stripped_name$(EXT); \
+	$(NVCC) "$(FILE)" -o "$$out"
+
+# usage: make kernel FILE=matmul.cu
+kernel:
+	@test -n "$(FILE)" || { echo "usage: make kernel FILE=<source>.cu"; exit 2; }
+	@found=$$(find kernels -type f -name $(FILE) | head -n 1); \
+	test -n "$$found" || { echo "error: could not find $(FILE) in kernels/*"; exit 2; }; \
+	$(MAKE) --no-print-directory run FILE="$$found"
 
 clean:
 	@rm -f *$(EXT)
