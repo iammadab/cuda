@@ -4,7 +4,9 @@ EXT := .bin
 
 .PHONY: run build kernel clean
 
-# usage: make run FILE=matmul.cu
+FILE := $(word 2, $(MAKECMDGOALS))
+
+# usage: make run matmu.cu
 # expands to nvcc matmul.cu -o matmul.bin && ./matmul.bin
 run:
 	@test -n "$(FILE)" || { echo "usage: make run FILE=<source>.cu"; exit 2; }
@@ -41,6 +43,9 @@ build-all:
 
 clean:
 	@rm -f *$(EXT)
+
+%:
+	@echo "exit"
 
 
 # SHORT TUTORIAL
