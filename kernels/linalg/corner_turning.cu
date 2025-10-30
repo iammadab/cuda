@@ -9,13 +9,26 @@ int N = 320;
 // C = A x B
 //
 // Dimensions (row, col)
-// A = (M, K)
-// B = (K, N)
-// C = (M, N)
+// A   = (M, K)
+// B   = (K, N)
+// B^T = (N, K)
+// C   = (M, N)
 
 #define TILE_WIDTH 16
 
-__global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N, int K) {
+// How to think about tiled transpose
+// given a threads global_y and global_x one can determine
+// what row of A and what col of B is needed to compute 
+// the threads output. 
+// row global_y of A and col global_x of B
+// given that b is transposed then col global_x
+// becomes row global_x
+// if we assume no tiling then that thread needs to access
+// B[global_x, 0..n] given B[row, col]
+// using the regular linearization trick with the appropraite 
+// width is sufficient.
+// this leads to an elegant single line diff
+__global__ void matmul_kernel_tiled_transpose(float *A, float *B, float *C, int M, int N, int K) {
   int row = blockIdx.y * blockDim.y + threadIdx.y;
   int col = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -34,7 +47,9 @@ __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N, 
       Ads[threadIdx.y][threadIdx.x] = 0.0f;
 
     if (ph_row < K && col < N)
-      Bds[threadIdx.y][threadIdx.x] = B[ph_row * N + col];
+      // diff here: col was used as row and row was used as col
+      // in global memory access
+      Bds[threadIdx.y][threadIdx.x] = B[col * K + ph_row];
     else
       Bds[threadIdx.y][threadIdx.x] = 0.0f;
 
@@ -97,14 +112,14 @@ int main() {
 
   // tiled matmul kernel
   for (int i = 0; i < WARMUP_COUNT; ++i) {
-    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+    matmul_kernel_tiled_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
   }
   CHECK_ERR(cudaDeviceSynchronize());
 
   // timed run
   CHECK_ERR(cudaEventRecord(start));
   for (int i = 0; i < REPEAT_COUNT; ++i) {
-    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
+    matmul_kernel_tiled_transpose<<<grid, block>>>(A_d, B_d_transpose, C_d, M, N, K);
   }
   CHECK_ERR(cudaEventRecord(stop));
   CHECK_ERR(cudaEventSynchronize(stop));
