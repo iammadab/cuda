@@ -3,7 +3,7 @@
 #include <time.h>
 
 #define UTILS_IMPLEMENTATION
-#include "utils.h"
+#include "../../include/utils.h"
 
 __global__
 void vec_add_kernel(float *A, float *B, float *C, int n) {

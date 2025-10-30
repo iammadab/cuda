@@ -1,5 +1,5 @@
 #define UTILS_IMPLEMENTATION
-#include "utils.h"
+#include "../../include/utils.h"
 
 int M = 100;
 int K = 100;
