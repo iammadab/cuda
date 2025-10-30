@@ -24,6 +24,21 @@ kernel:
 	test -n "$$found" || { echo "error: could not find $(FILE) in kernels/*"; exit 2; }; \
 	$(MAKE) --no-print-directory run FILE="$$found"
 
+# usage: make build-all
+build-all:
+	@echo "Building all kernels..."
+	@for f in $$(find kernels -type f -name *.cu); do \
+		name=$$(basename $$f .cu) \
+		out=$$name$(EXT); \
+		echo -e "\n\n\n"; \
+		echo "Compiling $$f -> $$out"; \
+		if $(NVCC) "$$f" -o "$$out"; then \
+			echo "✅$$f built successfully"; \
+		else \
+			echo "Error building $$f"; \
+		fi; \
+	done
+
 clean:
 	@rm -f *$(EXT)
 
