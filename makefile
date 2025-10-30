@@ -1,4 +1,5 @@
 NVCC := nvcc
+NVCC_QUIET := nvcc -w
 EXT := .bin
 
 .PHONY: run build kernel clean
@@ -30,9 +31,8 @@ build-all:
 	@for f in $$(find kernels -type f -name *.cu); do \
 		name=$$(basename $$f .cu) \
 		out=$$name$(EXT); \
-		echo -e "\n\n\n"; \
 		echo "Compiling $$f -> $$out"; \
-		if $(NVCC) "$$f" -o "$$out"; then \
+		if $(NVCC_QUIET) "$$f" -o "$$out"; then \
 			echo "✅$$f built successfully"; \
 		else \
 			echo "Error building $$f"; \
