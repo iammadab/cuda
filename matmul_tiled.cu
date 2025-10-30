@@ -17,8 +17,6 @@ int N = 320;
 
 #define TILE_WIDTH 16
 
-// TODO: handle irregular sized tile_widths
-
 __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N, int K) {
   int row = blockIdx.y * blockDim.y + threadIdx.y;
   int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -28,9 +26,20 @@ __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N, 
 
   float sum = 0;
 
-  for (int phase = 0; phase < K / TILE_WIDTH; ++phase) {
-    Ads[threadIdx.y][threadIdx.x] = A[row * K + (phase * TILE_WIDTH + threadIdx.x)];
-    Bds[threadIdx.y][threadIdx.x] = B[(phase * TILE_WIDTH + threadIdx.y) * N + col];
+  for (int phase = 0; phase < (K + TILE_WIDTH - 1) / TILE_WIDTH; ++phase) {
+    int ph_row = phase * TILE_WIDTH + threadIdx.y;
+    int ph_col = phase * TILE_WIDTH + threadIdx.x;
+
+    if (row < M && ph_col < K)
+      Ads[threadIdx.y][threadIdx.x] = A[row * K + ph_col];
+    else
+      Ads[threadIdx.y][threadIdx.x] = 0.0f;
+
+    if (ph_row < K && col < N)
+      Bds[threadIdx.y][threadIdx.x] = B[ph_row * N + col];
+    else
+      Bds[threadIdx.y][threadIdx.x] = 0.0f;
+
     __syncthreads();
   
     for (int i = 0; i < TILE_WIDTH; ++i) {
@@ -39,7 +48,8 @@ __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N, 
     __syncthreads();
   }
 
-  C[row * N + col] = sum;
+  if (row < M && col < N)
+    C[row * N + col] = sum;
 }
 
 int main() {
