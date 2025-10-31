@@ -1,6 +1,9 @@
 #define UTILS_IMPLEMENTATION
 #include "../../include/utils.h"
 
+#define LINALG_IMPLEMENTATION
+#include "../../include/linalg.h"
+
 #define TILE_WIDTH 16
 #define COARSE_FACTOR 4
 

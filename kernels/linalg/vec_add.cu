@@ -5,6 +5,9 @@
 #define UTILS_IMPLEMENTATION
 #include "../../include/utils.h"
 
+#define LINALG_IMPLEMENTATION
+#include "../../include/linalg.h"
+
 __global__
 void vec_add_kernel(float *A, float *B, float *C, int n) {
   int i = threadIdx.x + blockIdx.x * blockDim.x;
