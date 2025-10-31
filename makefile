@@ -14,18 +14,26 @@ run:
 	$(NVCC) "$(FILE)" -o $$out && ./$$out
 
 
-# usage: make build FILE=matmul.cu
+# usage: make build matmul.cu
 build:
 	@test -n "$(FILE)" || { echo "usage: make build FILE=<source>.cu"; exit 2; }
 	@stripped_name=$(basename $(FILE) .cu); out=$$stripped_name$(EXT); \
 	$(NVCC) "$(FILE)" -o "$$out"
 
-# usage: make kernel FILE=matmul.cu
+# usage: make kernel matmul.cu
 kernel:
 	@test -n "$(FILE)" || { echo "usage: make kernel FILE=<source>.cu"; exit 2; }
 	@found=$$(find kernels -type f -name $(FILE) | head -n 1); \
 	test -n "$$found" || { echo "error: could not find $(FILE) in kernels/*"; exit 2; }; \
 	$(MAKE) --no-print-directory run FILE="$$found"
+
+# usage: make fastkernel matmul.cu
+fastkernel:
+	@test -n "$(FILE)" || { echo "usage: make fastkernel FILE=<source>.cu"; exit 2; }
+	@found=$$(find kernels -type f -name $(FILE) | head -n 1); \
+	test -n "$$found" || { echo "error: could not find $(FILE) in kernels/*"; exit 2; }; \
+	stripped_name=$(basename $$found .cu); out=$$stripped_name$(EXT); \
+	$(NVCC) -DNOCPU "$$found" -o $$out && ./$$out
 
 # usage: make build-all
 build-all:

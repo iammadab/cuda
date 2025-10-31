@@ -35,15 +35,19 @@ float* rand_init(size_t N) {
 }
 
 void matmul_cpu(float *A, float *B, float *C, int M, int N, int K) {
-  for (int r = 0; r < M; ++r) {
-    for (int c = 0; c < N; ++c) {
-      float sum = 0;
-      for (int i = 0; i < K; ++i) {
-        sum += A[r * K + i] * B[c + i * N];
+  #ifndef NOCPU
+    for (int r = 0; r < M; ++r) {
+      for (int c = 0; c < N; ++c) {
+        float sum = 0;
+        for (int i = 0; i < K; ++i) {
+          sum += A[r * K + i] * B[c + i * N];
+        }
+        C[r * N + c] = sum;
       }
-      C[r * N + c] = sum;
     }
-  }
+  #else 
+    printf("warning: not computing CPU matmul\n");
+  #endif
 }
 
 // given some matrix A of dim (M, N)
@@ -61,12 +65,16 @@ float* transpose_arr(float *arr, int M, int N) {
 }
 
 void compare_arr(float *A, float *B, int size, float eps) {
-  for (int i = 0; i < size; ++i) {
-    if (fabsf(A[i] - B[i]) > eps) {
-      fprintf(stderr, "result mismatch\n");
-      exit(1);
+  #ifndef NOCPU
+    for (int i = 0; i < size; ++i) {
+      if (fabsf(A[i] - B[i]) > eps) {
+        fprintf(stderr, "result mismatch\n");
+        exit(1);
+      }
     }
-  }
+  #else
+    printf("warning: not comparing cpu output with kernel output\n");
+  #endif
 }
 
 #endif
