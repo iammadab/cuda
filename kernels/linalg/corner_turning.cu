@@ -1,9 +1,9 @@
 #define UTILS_IMPLEMENTATION
 #include "../../include/utils.h"
 
-int M = 320;
-int K = 320;
-int N = 320;
+int M = 1000;
+int K = 1000;
+int N = 1000;
 
 // MATMUL KERNEL
 // C = A x B
