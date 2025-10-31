@@ -1,5 +1,62 @@
+#define UTILS_IMPLEMENTATION
+#include "../../include/utils.h"
+
 #define TILE_WIDTH 16
 #define COARSE_FACTOR 4
+
+int M = 320;
+int K = 320;
+int N = 320;
+
+// MATMUL KERNEL
+// C = A x B
+//
+// Dimensions (row, col)
+// A = (M, K)
+// B = (K, N)
+// C = (M, N)
+
+__global__ void matmul_thread_coarsening(float *A, float *B, float *C, int M, int N, int K) {
+  // deine shared variables to hold the tiles
+  __shared__ float Ads[TILE_WIDTH][TILE_WIDTH];
+  __shared__ float Bds[TILE_WIDTH][TILE_WIDTH];
+
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+  float c_values[COARSE_FACTOR];
+  for (int i = 0; i < COARSE_FACTOR; ++i) {
+    c_values[i] = 0.f;
+  }
+
+  // phases
+  for (int ph = 0; ph < ceil(K / (float) TILE_WIDTH); ++ph) {
+    Ads[threadIdx.y][threadIdx.x] = A[row * K + (ph * TILE_WIDTH + threadIdx.x)];
+
+    // sequentially load the relevant B's into shared memory
+    for (int fac = 0; fac < COARSE_FACTOR; ++fac) {
+      int fac_col = col + fac * TILE_WIDTH;
+
+      Bds[threadIdx.y][threadIdx.x] = B[(ph * TILE_WIDTH + threadIdx.y) * N + fac_col];
+      __syncthreads();
+
+      float sum = 0;
+      for (int i = 0; i < TILE_WIDTH; i++) {
+        sum += Ads[threadIdx.y][i] * Bds[i][threadIdx.x];
+      }
+      c_values[fac] += sum;
+
+      __syncthreads();
+    }
+  }
+
+  // write output
+  for (int fac = 0; fac < COARSE_FACTOR; ++fac) {
+    int fac_col = col + fac * TILE_WIDTH; 
+    C[row * N + fac_col] = c_values[fac];
+  }
+
+}
 
 int main() {
   int size_a = M * K;
@@ -61,7 +118,7 @@ int main() {
 
   for (int i = 0; i < size_c; ++i) {
     if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
-      fprintf(stderr, "result mismatch");
+      fprintf(stderr, "result mismatch\n");
       return 1;
     }
   }
