@@ -34,13 +34,23 @@ __global__ void matmul_thread_coarsening(float *A, float *B, float *C, int M, in
 
   // phases
   for (int ph = 0; ph < ceil(K / (float) TILE_WIDTH); ++ph) {
-    Ads[threadIdx.y][threadIdx.x] = A[row * K + (ph * TILE_WIDTH + threadIdx.x)];
+    int ph_row = ph * TILE_WIDTH + threadIdx.y;
+    int ph_col = ph * TILE_WIDTH + threadIdx.x;
+
+    if (row < M && ph_col < K)
+      Ads[threadIdx.y][threadIdx.x] = A[row * K + ph_col];
+    else 
+      Ads[threadIdx.y][threadIdx.x] = 0.0f;
 
     // sequentially load the relevant B's into shared memory
     for (int fac = 0; fac < COARSE_FACTOR; ++fac) {
       int fac_col = col + fac * TILE_WIDTH;
 
-      Bds[threadIdx.y][threadIdx.x] = B[(ph * TILE_WIDTH + threadIdx.y) * N + fac_col];
+      if (ph_row < K && fac_col < N)
+        Bds[threadIdx.y][threadIdx.x] = B[(ph * TILE_WIDTH + threadIdx.y) * N + fac_col];
+      else
+        Bds[threadIdx.y][threadIdx.x] = 0.0f;
+
       __syncthreads();
 
       for (int i = 0; i < TILE_WIDTH; i++) {
@@ -53,7 +63,8 @@ __global__ void matmul_thread_coarsening(float *A, float *B, float *C, int M, in
   // write output
   for (int fac = 0; fac < COARSE_FACTOR; ++fac) {
     int fac_col = col + fac * TILE_WIDTH; 
-    C[row * N + fac_col] = c_values[fac];
+    if (row < M && fac_col < N)
+      C[row * N + fac_col] = c_values[fac];
   }
 
 }
