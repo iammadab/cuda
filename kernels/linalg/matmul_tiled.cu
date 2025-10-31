@@ -84,7 +84,6 @@ int main() {
   // comparison parameters
   const int WARMUP_COUNT = 3;
   const int REPEAT_COUNT = 10;
-  float eps = 1e-4f;
 
   cudaEvent_t start, stop;
   CHECK_ERR(cudaEventCreate(&start));
