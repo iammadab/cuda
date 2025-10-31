@@ -1,7 +1,3 @@
-// what is the idea with thread coarsening?
-// it is still tiled, but a single thread works across multiple columns
-// hence the number of thread blocks are going to reduce drastically
-
 #define TILE_WIDTH 16
 #define COARSE_FACTOR 4
 
@@ -45,7 +41,7 @@ int main() {
   CHECK_ERR(cudaEventCreate(&start));
   CHECK_ERR(cudaEventCreate(&stop));
 
-  // tiled matmul kernel
+  // warmup run
   for (int i = 0; i < WARMUP_COUNT; ++i) {
     matmul_thread_coarsening<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
   }
@@ -54,7 +50,7 @@ int main() {
   // timed run
   CHECK_ERR(cudaEventRecord(start));
   for (int i = 0; i < REPEAT_COUNT; ++i) {
-    matmul_kernel_tiled<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
+    matmul_thread_coarsening<<<grid, block>>>(A_d, B_d, C_d, M, N, K);
   }
   CHECK_ERR(cudaEventRecord(stop));
   CHECK_ERR(cudaEventSynchronize(stop));
@@ -74,7 +70,7 @@ int main() {
   CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
   ms /= REPEAT_COUNT;
 
-  printf("ok tiled matmul: %fms\n", ms);
+  printf("ok coarsed matmul: %fms\n", ms);
 
   // free memory
   free(A_h);
