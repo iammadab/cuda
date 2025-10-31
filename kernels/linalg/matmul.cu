@@ -1,6 +1,9 @@
 #define UTILS_IMPLEMENTATION
 #include "../../include/utils.h"
 
+#define LINALG_IMPLEMENTATION
+#include "../../include/linalg.h"
+
 int M = 100;
 int K = 100;
 int N = 100;
