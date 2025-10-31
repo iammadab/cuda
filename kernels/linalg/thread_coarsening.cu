@@ -7,9 +7,9 @@
 #define TILE_WIDTH 16
 #define COARSE_FACTOR 4
 
-int M = 1000;
-int K = 1000;
-int N = 1000;
+int M = 3000;
+int K = 3000;
+int N = 3000;
 
 // MATMUL KERNEL
 // C = A x B
