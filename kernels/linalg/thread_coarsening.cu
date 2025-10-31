@@ -22,8 +22,11 @@ __global__ void matmul_thread_coarsening(float *A, float *B, float *C, int M, in
   __shared__ float Bds[TILE_WIDTH][TILE_WIDTH];
 
   int row = blockIdx.y * blockDim.y + threadIdx.y;
-  int col = blockIdx.x * blockDim.x + threadIdx.x;
+  // tiles already done = blockIdx * blockIdx * COARSE_FACTOR
+  // we add threadIdx.x to get the column within the first tile
+  int col = blockIdx.x * blockDim.x * COARSE_FACTOR + threadIdx.x;
 
+  // init zero output
   float c_values[COARSE_FACTOR];
   for (int i = 0; i < COARSE_FACTOR; ++i) {
     c_values[i] = 0.f;
@@ -40,12 +43,9 @@ __global__ void matmul_thread_coarsening(float *A, float *B, float *C, int M, in
       Bds[threadIdx.y][threadIdx.x] = B[(ph * TILE_WIDTH + threadIdx.y) * N + fac_col];
       __syncthreads();
 
-      float sum = 0;
       for (int i = 0; i < TILE_WIDTH; i++) {
-        sum += Ads[threadIdx.y][i] * Bds[i][threadIdx.x];
+        c_values[fac] += Ads[threadIdx.y][i] * Bds[i][threadIdx.x];
       }
-      c_values[fac] += sum;
-
       __syncthreads();
     }
   }
@@ -84,7 +84,7 @@ int main() {
   matmul_cpu(A_h, B_h, C_h_cpu_result, M, N, K);
 
   int grid_x = ceil(N / (float) (TILE_WIDTH * COARSE_FACTOR));
-  int grid_y = ceil(M / (float) (TILE_WIDTH * COARSE_FACTOR));
+  int grid_y = ceil(M / (float) TILE_WIDTH);
 
   dim3 block(TILE_WIDTH, TILE_WIDTH);
   dim3 grid(grid_x, grid_y);
@@ -118,10 +118,12 @@ int main() {
 
   for (int i = 0; i < size_c; ++i) {
     if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
+      printf("i: %d, CPU: %f Device: %f\n", i, C_h_cpu_result[i], C_h[i]);
       fprintf(stderr, "result mismatch\n");
       return 1;
     }
   }
+
 
   float ms = 0;
   CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
