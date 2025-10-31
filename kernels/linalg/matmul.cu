@@ -43,20 +43,6 @@ __global__ void matmul_kernel_b_transpose(float *A, float *B, float *C, int M, i
   C[row * N + col] = sum;
 }
 
-// given some matrix A of dim (M, N)
-/// returns a pointer to a new matrix (N, M)
-/// with the data transposed
-float* transpose_arr(float *arr, int M, int N) {
-  float *result = (float*) malloc(M * N * sizeof(float));
-  for (int r = 0; r < M; ++r) {
-    for (int c = 0; c < N; ++c) {
-      // (r, c) -> (c, r)
-      result[c * M + r] = arr[r * N + c];
-    }
-  }
-  return result;
-}
-
 int main() {
   int size_a = M * K;
   int size_b = K * N;

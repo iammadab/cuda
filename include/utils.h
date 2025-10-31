@@ -7,6 +7,7 @@
 void print_arr(float* Arr, size_t N);
 float* rand_init(size_t N);
 void matmul_cpu(float *A, float *B, float *C, int M, int N, int K);
+float* transpose_arr(float *arr, int M, int N);
 
 #endif
 
@@ -48,6 +49,20 @@ void matmul_cpu(float *A, float *B, float *C, int M, int N, int K) {
       C[r * N + c] = sum;
     }
   }
+}
+
+// given some matrix A of dim (M, N)
+/// returns a pointer to a new matrix (N, M)
+/// with the data transposed
+float* transpose_arr(float *arr, int M, int N) {
+  float *result = (float*) malloc(M * N * sizeof(float));
+  for (int r = 0; r < M; ++r) {
+    for (int c = 0; c < N; ++c) {
+      // (r, c) -> (c, r)
+      result[c * M + r] = arr[r * N + c];
+    }
+  }
+  return result;
 }
 
 #endif
