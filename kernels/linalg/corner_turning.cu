@@ -153,7 +153,6 @@ int main() {
   // comparison parameters
   const int WARMUP_COUNT = 3;
   const int REPEAT_COUNT = 10;
-  float eps = 1e-4f;
 
   cudaEvent_t start, stop;
   CHECK_ERR(cudaEventCreate(&start));
@@ -181,12 +180,7 @@ int main() {
   CHECK_ERR(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
-  for (int i = 0; i < size_c; ++i) {
-    if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
-      fprintf(stderr, "result mismatch\n");
-      return 1;
-    }
-  }
+  compare_arr(C_h_cpu_result, C_h, size_c, EPSILON);
 
   float ms = 0;
   CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
@@ -213,12 +207,7 @@ int main() {
   CHECK_ERR(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
-  for (int i = 0; i < size_c; ++i) {
-    if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
-      fprintf(stderr, "result mismatch\n");
-      return 1;
-    }
-  }
+  compare_arr(C_h_cpu_result, C_h, size_c, EPSILON);
 
   CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));
   ms /= REPEAT_COUNT;
