@@ -15,7 +15,7 @@ int N = 320;
 
 // TODO: plot improvement with different tile widths
 
-#define TILE_WIDTH 16
+#define TILE_WIDTH 32
 
 __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N, int K) {
   int row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -108,12 +108,7 @@ int main() {
   CHECK_ERR(cudaMemcpy(C_h, C_d, size_c * sizeof(float), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
-  for (int i = 0; i < size_c; ++i) {
-    if (fabsf(C_h_cpu_result[i] - C_h[i]) > eps) {
-      fprintf(stderr, "result mismatch");
-      return 1;
-    }
-  }
+  compare_arr(C_h_cpu_result, C_h, size_c, EPSILON);
 
   float ms = 0;
   CHECK_ERR(cudaEventElapsedTime(&ms, start, stop));

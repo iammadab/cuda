@@ -4,10 +4,13 @@
 
 #include <stddef.h>
 
+#define EPSILON 1e-4f
+
 void print_arr(float* Arr, size_t N);
 float* rand_init(size_t N);
 void matmul_cpu(float *A, float *B, float *C, int M, int N, int K);
 float* transpose_arr(float *arr, int M, int N);
+void compare_arr(float *A, float *B, int size, float eps);
 
 #endif
 
@@ -65,4 +68,12 @@ float* transpose_arr(float *arr, int M, int N) {
   return result;
 }
 
+void compare_arr(float *A, float *B, int size, float eps) {
+  for (int i = 0; i < size; ++i) {
+    if (fabsf(A[i] - B[i]) > eps) {
+      fprintf(stderr, "result mismatch\n");
+      exit(1);
+    }
+  }
+}
 #endif
