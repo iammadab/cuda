@@ -65,7 +65,14 @@ __global__ void matmul_kernel_tiled_transpose(float *A, float *B, float *C, int 
     C[row * N + col] = sum;
 }
 
-// TODO: come up with a better explanation
+// How to think about corner turning
+// if we visualize the block, each thread has a position based
+// on it's x and y values. 
+// we can permute the logical position of each thread by applying 
+// some function to it's co-ordinates.
+// logically transpose within the hblock by swapping x and y
+// flip around the vertical axis by negating and normalizing
+// giving the power to achieve different access patterns
 __global__ void corner_turning_tiled(float *A, float *B, float *C, int M, int N, int K) {
   int row = blockIdx.y * blockDim.y + threadIdx.y;
   int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -83,11 +90,19 @@ __global__ void corner_turning_tiled(float *A, float *B, float *C, int M, int N,
     else
       Ads[threadIdx.y][threadIdx.x] = 0.0f;
 
-    int col_n = blockIdx.x * blockDim.x + threadIdx.y;
-    int ph_row_n = phase * TILE_WIDTH + threadIdx.x;
 
-    if (ph_row_n < K && col_n < N)
-      Bds[threadIdx.x][threadIdx.y] = B[col_n * K + ph_row_n];
+    // permute the logical index of each thread
+    // we apply the swap i.e (x, y) -> (y, x)
+    // logical column
+    int l_col = blockIdx.x * blockDim.x + threadIdx.y;
+    // logical row -> this is based on the phase
+    int l_row = phase * TILE_WIDTH + threadIdx.x;
+
+    // recall since transposed col will be use as row
+    // and row will be used as col in linearization
+    // explains the guards and the indexing into B
+    if (l_row < K && l_col < N)
+      Bds[threadIdx.x][threadIdx.y] = B[l_col * K + l_row];
     else
       Bds[threadIdx.x][threadIdx.y] = 0.0f;
 
