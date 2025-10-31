@@ -35,6 +35,7 @@ float* rand_init(size_t N) {
 }
 
 void matmul_cpu(float *A, float *B, float *C, int M, int N, int K) {
+  #ifndef NOCPU
   for (int r = 0; r < M; ++r) {
     for (int c = 0; c < N; ++c) {
       float sum = 0;
@@ -44,6 +45,7 @@ void matmul_cpu(float *A, float *B, float *C, int M, int N, int K) {
       C[r * N + c] = sum;
     }
   }
+  #endif
 }
 
 // given some matrix A of dim (M, N)
@@ -61,12 +63,14 @@ float* transpose_arr(float *arr, int M, int N) {
 }
 
 void compare_arr(float *A, float *B, int size, float eps) {
+  #ifndef NOCPU
   for (int i = 0; i < size; ++i) {
     if (fabsf(A[i] - B[i]) > eps) {
       fprintf(stderr, "result mismatch\n");
       exit(1);
     }
   }
+  #endif
 }
 
 #endif
