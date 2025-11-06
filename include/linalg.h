@@ -25,7 +25,7 @@ void compare_arr(float *A, float *B, int size, float eps);
 void print_arr(float *Arr, size_t N) {
   for (size_t i = 0; i < N; ++i) 
     printf("%f\n", Arr[i]);
-  printf("\n");
+  printf("\n\n");
 }
 
 void print_arr_2d(float *Arr, size_t width, size_t N) {
@@ -35,7 +35,8 @@ void print_arr_2d(float *Arr, size_t width, size_t N) {
     }
     printf("%.3f\t", Arr[i]);
   }
-  printf("\n");
+  printf("\n\n");
+
 }
 
 float* rand_init(size_t N) {
