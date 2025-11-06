@@ -25,23 +25,41 @@ int main() {
 
   // allocate the output
   float *C = (float*) malloc(size_bytes);
+  // conv_cpu(A, C, F, FILTER_SIZE, N);
 
-  // perform convolution
-  for (int row = 0; row < N; ++row) {
-    for (int col = 0; col < N; ++col) {
-      float sum = 0.0;
-
-      // TODO make this cleaner
-      for (int frow = 0; frow < FILTER_WIDTH; ++frow) {
-        for (int fcol = 0; fcol < FILTER_WIDTH; ++fcol) {
-          int nrow = row + frow - 1; 
-          int ncol = col + fcol - 1; 
-          sum += A[nrow * N + ncol] * F[frow * FILTER_WIDTH + fcol]; 
-        }
-      }
-      C[row * N + col] = sum;
-    }
-  }
+  // perform convolution (iterate over each cell)
+  // for (int row = 0; row < N; ++row) {
+  //   for (int col = 0; col < N; ++col) {
+  //     float sum = 0.0;
+  //
+  //     for (int frow = 0; frow < FILTER_WIDTH; ++frow) {
+  //       for (int fcol = 0; fcol < FILTER_WIDTH; ++fcol) {
+  //         int nrow = row + frow - FILTER_SIZE; 
+  //         int ncol = col + fcol - FILTER_SIZE; 
+  //         sum += A[nrow * N + ncol] * F[frow * FILTER_WIDTH + fcol]; 
+  //       }
+  //     }
+  //     C[row * N + col] = sum;
+  //   }
+  // }
 
   print_arr_2d(C, N, size);
+}
+
+// TODO: add documentation
+void conv_cpu(float *N, float *P, float *F, int FILTER_SIZE, int WIDTH) {
+  int FILTER_WIDTH = 2 * FILTER_SIZE + 1;
+  for (int row = 0; row < WIDTH; ++row) {
+    for (int col = 0; col < WIDTH; ++col) {
+      float sum = 0.0;
+      for (int f_row = 0; f_row < FILTER_WIDTH; ++f_row) {
+        for (int f_col = 0; f_col < FILTER_WIDTH; ++f_col) {
+          int n_row = row + f_row - FILTER_SIZE;
+          int n_col = col + f_col - FILTER_SIZE;
+          sum += N[n_row * WIDTH + n_col] * F[f_row * FILTER_WIDTH + f_col];
+        }
+      }
+      P[row * N + col] = sum;
+    }
+  }
 }
