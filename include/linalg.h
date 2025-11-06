@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 void print_arr(float* Arr, size_t N);
+void print_arr_2d(float *Arr, size_t width, size_t N);
 float* rand_init(size_t N);
 void matmul_cpu(float *A, float *B, float *C, int M, int N, int K);
 float* transpose_arr(float *arr, int M, int N);
@@ -24,6 +25,16 @@ void compare_arr(float *A, float *B, int size, float eps);
 void print_arr(float *Arr, size_t N) {
   for (size_t i = 0; i < N; ++i) 
     printf("%f\n", Arr[i]);
+  printf("\n");
+}
+
+void print_arr_2d(float *Arr, size_t width, size_t N) {
+  for (size_t i = 0; i < N; ++i) {
+    if (i != 0 && i % width == 0) {
+      printf("\n");
+    }
+    printf("%.3f\t", Arr[i]);
+  }
   printf("\n");
 }
 
